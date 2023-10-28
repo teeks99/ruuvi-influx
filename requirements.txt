@@ -1,0 +1,5 @@
+#ruuvitag-sensor
+git+https://github.com/ttu/ruuvitag-sensor
+bleak
+influxdb-client
+pyyaml
