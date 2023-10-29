@@ -39,7 +39,7 @@ class DataChecker(object):
     def __init__(self, influx_db, max_interval_sec=0, check_url=None):
         self.influx_db = influx_db
 
-        self.max_interval_sec = max_interval_sec
+        self.max_interval = datetime.timedelta(seconds=max_interval_sec)
         self.last_stored = {}
 
         self.check_url = check_url
@@ -58,7 +58,7 @@ class DataChecker(object):
         self.trimmed_payload = self.payload.copy()
         del self.trimmed_payload["measurement_sequence_number"]
 
-        if not self.max_interval_sec:
+        if not self.max_interval:
             self.store()
             return True
 
@@ -82,7 +82,7 @@ class DataChecker(object):
             return True
 
         last_time = self.last_stored[self.mac]["last_time"]
-        if datetime.datetime.utcnow() - last_time > self.max_interval_sec:
+        if datetime.datetime.utcnow() - last_time > self.max_interval:
             return True
 
         return False
