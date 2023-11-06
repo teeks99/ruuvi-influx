@@ -32,12 +32,18 @@ def parse_cli_args():
     parser.add_argument(
         "--check-url", default="",
         help="URL to notify each time that a packet is sent.")
+    parser.add_argument(
+        "--allow-mac", "-m", action="append", default=[],
+        help="MAC address to support, if none specified support all. " +
+        "Use multiple times for multiple MACs")
 
     return parser.parse_args()
 
 class DataChecker(object):
-    def __init__(self, influx_db, max_interval_sec=0, check_url=None):
+    def __init__(
+            self, influx_db, max_interval_sec=0, allow_macs=[], check_url=None):
         self.influx_db = influx_db
+        self.allow_macs = allow_macs
 
         self.max_interval = datetime.timedelta(seconds=max_interval_sec)
         self.last_stored = {}
@@ -55,6 +61,9 @@ class DataChecker(object):
                 self.notify_url()
 
     def check_for_send(self):
+        if not self.valid_mac():
+            return False
+
         self.trimmed_payload = self.payload.copy()
         del self.trimmed_payload["measurement_sequence_number"]
 
@@ -87,6 +96,12 @@ class DataChecker(object):
 
         return False
 
+    def valid_mac(self):
+        if not self.allow_macs:
+            return True
+
+        return self.mac in self.allow_macs
+
     def notify_url(self):
         if self.check_url:
             try:
@@ -101,7 +116,8 @@ if __name__ == "__main__":
     db = influx_writer.RuuviInfluxWriter(
         args.influx_url, args.influx_org, args.influx_bucket)
     
-    dc = DataChecker(db, int(args.max_interval_sec), args.check_url)
+    dc = DataChecker(
+        db, int(args.max_interval_sec), args.allow_mac, args.check_url)
 
     #RuuviTagSensor.get_data(write_to_influxdb)
     asyncio.get_event_loop().run_until_complete(dc.main())
