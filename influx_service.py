@@ -52,7 +52,7 @@ class DataChecker(object):
 
     async def main(self):
         async for data in RuuviTagSensor.get_data_async():
-            print(data)
+            print(f"{datetime.datetime.now().isoformat()} - {data}")
             self.mac = data[0]
             self.payload = data[1]
 
